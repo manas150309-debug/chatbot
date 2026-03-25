@@ -1,0 +1,17 @@
+.DS_Store
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+assistant.db
+models/
+
+report.pdf
+evaluation_report.csv
+
+.env
+.venv/
+venv/
+node_modules/
+npm-debug.log*
