@@ -619,7 +619,6 @@ The main project files relevant to this synopsis are:
 
 This synopsis is intended to serve as a formal project summary for submission, explanation, presentation, or documentation. It describes the vision, architecture, implementation approach, advantages, limitations, and future direction of DarkTraceX in clear and structured language.
 
-
 ## Bibliography
 
 - Local project files under /Users/manas/Desktop/chatbot

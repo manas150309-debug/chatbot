@@ -10,7 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Share+Tech+Mono&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles.css?v=8" />
+    <link rel="stylesheet" href="./styles.css?v=16" />
   </head>
   <body>
     <div class="noise"></div>
@@ -20,9 +20,14 @@
           <p class="kicker">DarkTraceX</p>
           <h1>Defensive Cyber AI Console</h1>
           <p class="lede">
-            Local-model defensive assistant with persistent memory, offline knowledge, and security
+            Local-model defensive assistant with persistent memory, local knowledge, and security
             analysis tools for developers and analysts.
           </p>
+          <div class="brand-tags">
+            <span>Local AI</span>
+            <span>Local CVE</span>
+            <span>Threat Reports</span>
+          </div>
         </div>
 
         <div class="panel stat-panel">
@@ -65,24 +70,38 @@
           <div id="note-status" class="small-status">Idle</div>
         </div>
 
-        <div class="panel">
+        <div class="panel guidance-panel">
           <div class="panel-header">
-            <h2>Tool Surface</h2>
+            <h2>Best Uses</h2>
           </div>
-          <ul class="tool-list">
-            <li>`remember_note` for persistent memory</li>
-            <li>`search_notes` for prior findings</li>
-            <li>`search_knowledge` for offline security references</li>
-            <li>`search_code_examples` for exact insecure/secure pairs</li>
-            <li>`search_detection_rules` for attack taxonomy and detection guidance</li>
-            <li>`search_phishing_examples` for stored phishing examples</li>
-            <li>`classify_defense_text` for local pattern-learning classification</li>
-            <li>`dns_lookup` for hostname resolution</li>
-            <li>`reverse_dns` for public IP attribution</li>
-            <li>`http_headers` for response and security header review</li>
-            <li>`security_headers_audit` for baseline header findings</li>
-            <li>`tls_inspect` for certificate inspection</li>
-          </ul>
+          <div class="guidance-list">
+            <article class="guidance-item">
+              <p class="guidance-title">Website Review</p>
+              <p class="guidance-copy">
+                Try `cyber analysis of google.com` or `create report for example.com`.
+              </p>
+            </article>
+            <article class="guidance-item">
+              <p class="guidance-title">Cyber Analysis Report</p>
+              <p class="guidance-copy">
+                Try `cyber analysis of example.com` or `create cyber analysis report for example.com`.
+              </p>
+            </article>
+            <article class="guidance-item">
+              <p class="guidance-title">CVE Lookup</p>
+              <p class="guidance-copy">Try `search CVE-2021-44228 in cve database`.</p>
+            </article>
+            <article class="guidance-item">
+              <p class="guidance-title">Code Safety</p>
+              <p class="guidance-copy">
+                Paste insecure code and ask for a secure fix or explanation.
+              </p>
+            </article>
+            <article class="guidance-item">
+              <p class="guidance-title">Phishing Check</p>
+              <p class="guidance-copy">Paste a message or email and ask if it is phishing.</p>
+            </article>
+          </div>
         </div>
       </aside>
 
@@ -99,9 +118,28 @@
           </div>
         </header>
 
-        <section id="messages" class="messages panel" aria-live="polite"></section>
+        <section class="workspace-card panel">
+          <div class="workspace-intro">
+            <p class="workspace-title">
+              Ask for analysis, reports, CVEs, code review, or phishing checks.
+            </p>
+            <p class="workspace-copy">
+              Results are kept local and shown in a simplified format with threat scoring and local
+              knowledge.
+            </p>
+          </div>
+          <section id="messages" class="messages" aria-live="polite"></section>
+        </section>
 
         <section class="feed-grid">
+          <div class="panel mini-panel">
+            <div class="panel-header">
+              <h2>Threat Overview</h2>
+            </div>
+            <div id="threat-overview" class="threat-panel empty-state">
+              No URL threat report yet.
+            </div>
+          </div>
           <div class="panel mini-panel">
             <div class="panel-header">
               <h2>Recent Notes</h2>
@@ -110,13 +148,7 @@
           </div>
           <div class="panel mini-panel">
             <div class="panel-header">
-              <h2>Tool Activity</h2>
-            </div>
-            <div id="tool-log" class="feed-list empty-state">No tools used in this session.</div>
-          </div>
-          <div class="panel mini-panel">
-            <div class="panel-header">
-              <h2>Classifier Results</h2>
+              <h2>AI Insight</h2>
             </div>
             <div id="classifier-log" class="feed-list empty-state">No classifier output yet.</div>
           </div>
@@ -152,6 +184,6 @@
       </article>
     </template>
 
-    <script src="./app.js?v=8"></script>
+    <script src="./app.js?v=16"></script>
   </body>
 </html>

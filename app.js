@@ -10,16 +10,16 @@ const noteFormEl = document.querySelector('#note-form');
 const noteInputEl = document.querySelector('#note-input');
 const noteStatusEl = document.querySelector('#note-status');
 const recentNotesEl = document.querySelector('#recent-notes');
-const toolLogEl = document.querySelector('#tool-log');
 const classifierLogEl = document.querySelector('#classifier-log');
+const threatOverviewEl = document.querySelector('#threat-overview');
 const templateEl = document.querySelector('#message-template');
 const feedTemplateEl = document.querySelector('#feed-item-template');
 
-const storageKey = 'darktracex-session-v2';
+const storageKey = 'darktracex-session-v3';
 const starterMessages = [
   {
     role: 'assistant',
-    text: 'DarkTraceX online. How can I help you secure or analyze something today?',
+    text: 'DarkTraceX online. How can I help you with local analysis, reports, or security knowledge today?',
   },
 ];
 
@@ -68,6 +68,57 @@ function renderMessage(message) {
   role.textContent = message.role;
   text.textContent = message.text;
 
+  const parsedGraph = message.role === 'assistant' ? parseGraphFromReply(message.text) : null;
+  if (parsedGraph) {
+    const graphCard = document.createElement('div');
+    graphCard.className = 'message-graph';
+
+    const graphTitle = document.createElement('p');
+    graphTitle.className = 'threat-title';
+    graphTitle.textContent = `${parsedGraph.final_url} · ${parsedGraph.severity}`;
+    graphCard.appendChild(graphTitle);
+
+    const graphScore = document.createElement('p');
+    graphScore.className = 'threat-score';
+    graphScore.textContent = `Overall risk ${parsedGraph.threat_score}/100 · Safety ${parsedGraph.protection_score}/100`;
+    graphCard.appendChild(graphScore);
+
+    const labelMap = {
+      header_hardening: 'Website protection',
+      transport_security: 'Connection safety',
+      tls_hygiene: 'Certificate health',
+      disclosure_control: 'Privacy exposure',
+    };
+
+    Object.entries(parsedGraph.graph || {}).forEach(([key, item]) => {
+      const row = document.createElement('div');
+      row.className = 'threat-row';
+
+      const label = document.createElement('span');
+      label.className = 'threat-label';
+      label.textContent = labelMap[key] || key.replaceAll('_', ' ');
+
+      const bar = document.createElement('div');
+      bar.className = 'threat-bar';
+
+      const fill = document.createElement('div');
+      fill.className = 'threat-fill';
+      fill.style.width = `${item.score}%`;
+
+      const value = document.createElement('span');
+      value.className = 'threat-value';
+      value.textContent = `${item.score}/100`;
+
+      bar.appendChild(fill);
+      row.appendChild(label);
+      row.appendChild(bar);
+      row.appendChild(value);
+      graphCard.appendChild(row);
+    });
+
+    article.appendChild(graphCard);
+  }
+
   messagesEl.appendChild(fragment);
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
@@ -100,6 +151,86 @@ function addFeedItem(container, title, body) {
   container.appendChild(fragment);
 }
 
+function parseGraphFromReply(reply) {
+  const text = reply || '';
+  const scoreMatch = text.match(/Threat score:\s*(\d+)\/100[\s\S]*?Protection score:\s*(\d+)\/100/i);
+  const urlMatch = text.match(/(?:Cyber Analysis Report|URL Threat Report):\s*(.+)/i);
+  const severityMatch = text.match(/Severity:\s*(.+)/i);
+  const graphPatterns = {
+    header_hardening: /Website protection\s+\[[#-]+\]\s+(\d+)\/100/i,
+    transport_security: /Connection safety\s+\[[#-]+\]\s+(\d+)\/100/i,
+    tls_hygiene: /Certificate health\s+\[[#-]+\]\s+(\d+)\/100/i,
+    disclosure_control: /Privacy exposure\s+\[[#-]+\]\s+(\d+)\/100/i,
+  };
+
+  const graph = {};
+  Object.entries(graphPatterns).forEach(([key, pattern]) => {
+    const match = text.match(pattern);
+    if (match) {
+      graph[key] = { score: Number(match[1]) };
+    }
+  });
+
+  if (!Object.keys(graph).length || !scoreMatch) {
+    return null;
+  }
+
+  return {
+    final_url: urlMatch?.[1]?.trim() || 'Current target',
+    severity: severityMatch?.[1]?.trim() || 'Unknown',
+    threat_score: Number(scoreMatch[1]),
+    protection_score: Number(scoreMatch[2]),
+    graph,
+  };
+}
+
+function renderThreatOverview(result) {
+  threatOverviewEl.classList.remove('empty-state');
+  threatOverviewEl.innerHTML = '';
+  const labelMap = {
+    header_hardening: 'Website protection',
+    transport_security: 'Connection safety',
+    tls_hygiene: 'Certificate health',
+    disclosure_control: 'Privacy exposure',
+  };
+
+  const title = document.createElement('p');
+  title.className = 'threat-title';
+  title.textContent = `${result.final_url || result.url} · ${result.severity}`;
+  threatOverviewEl.appendChild(title);
+
+  const score = document.createElement('p');
+  score.className = 'threat-score';
+  score.textContent = `Overall risk ${result.threat_score}/100 · Safety ${result.protection_score}/100`;
+  threatOverviewEl.appendChild(score);
+
+  Object.entries(result.graph || {}).forEach(([key, item]) => {
+    const row = document.createElement('div');
+    row.className = 'threat-row';
+
+    const label = document.createElement('span');
+    label.className = 'threat-label';
+    label.textContent = labelMap[key] || key.replaceAll('_', ' ');
+
+    const bar = document.createElement('div');
+    bar.className = 'threat-bar';
+
+    const fill = document.createElement('div');
+    fill.className = 'threat-fill';
+    fill.style.width = `${item.score}%`;
+
+    const value = document.createElement('span');
+    value.className = 'threat-value';
+    value.textContent = `${item.score}/100`;
+
+    bar.appendChild(fill);
+    row.appendChild(label);
+    row.appendChild(bar);
+    row.appendChild(value);
+    threatOverviewEl.appendChild(row);
+  });
+}
+
 function updateStats(stats) {
   document.querySelector('#stat-conversations').textContent = stats?.conversations ?? '0';
   document.querySelector('#stat-messages').textContent = stats?.messages ?? '0';
@@ -112,18 +243,35 @@ function updateStats(stats) {
   });
 }
 
-function updateToolLog(toolEvents) {
-  resetFeed(toolLogEl, 'No tools used in this session.');
+function updateInsights(toolEvents) {
   resetFeed(classifierLogEl, 'No classifier output yet.');
+  resetFeed(threatOverviewEl, 'No URL threat report yet.');
   (toolEvents || []).forEach((event) => {
-    const body = JSON.stringify(event.result, null, 2);
-    addFeedItem(toolLogEl, event.tool_name, body);
     if (event.tool_name === 'classify_defense_text') {
       addFeedItem(
         classifierLogEl,
         event.result.model,
         `label=${event.result.label} confidence=${event.result.confidence}`,
       );
+    }
+    if (event.tool_name === 'url_threat_report') {
+      renderThreatOverview(event.result);
+    }
+    if (event.tool_name === 'openvas_local_scan') {
+      renderThreatOverview(event.result);
+    }
+    if (event.tool_name === 'create_url_report_file' && event.result.graph) {
+      renderThreatOverview({
+        ...event.result,
+        final_url: event.result.url,
+        protection_score: 100 - event.result.threat_score,
+      });
+    }
+    if (event.tool_name === 'create_openvas_report_file' && event.result.graph) {
+      renderThreatOverview({
+        ...event.result,
+        final_url: event.result.url,
+      });
     }
   });
 }
@@ -219,7 +367,13 @@ composerEl.addEventListener('submit', async (event) => {
     messages.push(assistantMessage);
     renderMessage(assistantMessage);
     saveSession();
-    updateToolLog(data.tool_events);
+    updateInsights(data.tool_events);
+    if (!data.tool_events?.length) {
+      const parsedGraph = parseGraphFromReply(data.reply);
+      if (parsedGraph) {
+        renderThreatOverview(parsedGraph);
+      }
+    }
     updateStats(data.stats);
     setStatus(`Ready · ${data.model}`);
   } catch (error) {
@@ -264,7 +418,7 @@ clearButtonEl.addEventListener('click', () => {
   messages = [...starterMessages];
   saveSession();
   renderMessages(messages);
-  updateToolLog([]);
+  updateInsights([]);
   setStatus('Ready');
 });
 
@@ -281,17 +435,10 @@ exportJsonEl.addEventListener('click', () => {
 });
 
 renderMessages(messages);
-updateToolLog([]);
-fetchState().catch(() => {});
-autoResize(promptEl);
-autoResize(noteInputEl);
-
-promptEl.addEventListener('input', () => autoResize(promptEl));
-noteInputEl.addEventListener('input', () => autoResize(noteInputEl));
-
-renderMessages(messages);
-updateToolLog([]);
+updateInsights([]);
 fetchState().catch(() => {});
 autoResize(promptEl);
 autoResize(noteInputEl);
 setStatus('Ready');
+promptEl.addEventListener('input', () => autoResize(promptEl));
+noteInputEl.addEventListener('input', () => autoResize(noteInputEl));
