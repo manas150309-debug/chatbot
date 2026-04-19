@@ -27,8 +27,8 @@ from pathlib import Path
 from urllib import error, request
 
 
-HOST = "127.0.0.1"
-PORT = 8000
+HOST = os.environ.get("HOST", "127.0.0.1")
+PORT = int(os.environ.get("PORT", "8000"))
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / "assistant.db"
 DATA_DIR = BASE_DIR / "data"
@@ -3530,6 +3530,18 @@ class ChatHandler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
+
+        if parsed.path == "/healthz":
+            self._send_json(
+                200,
+                {
+                    "status": "ok",
+                    "service": "darktracex",
+                    "model_provider": MODEL_PROVIDER,
+                    "offline_mode": OFFLINE_MODE,
+                },
+            )
+            return
 
         if parsed.path == "/api/state":
             self._send_json(200, conversation_stats())

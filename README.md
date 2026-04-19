@@ -185,6 +185,48 @@ What GitHub Pages cannot do for this project:
 
 If you want the full app online, use a host that can run Python plus a model/backend process. GitHub Pages is only suitable for a static demo shell.
 
+## Real Backend Deploy Target
+
+The repo now includes a real backend deployment path for platforms that can run Python services:
+
+- `Dockerfile`
+- `requirements.txt`
+- `render.yaml`
+- `/healthz` endpoint in `server.py`
+
+Recommended target:
+
+- Render web service
+
+Why this works better than GitHub Pages:
+
+- it can run `server.py`
+- it can serve both the frontend and `/api/*` backend routes
+- it can keep the SQLite-backed app alive
+- if Ollama is not available in the cloud environment, DarkTraceX still falls back to local knowledge retrieval instead of failing completely
+
+Hosted-mode notes:
+
+- set `HOST=0.0.0.0`
+- use the platform `PORT`
+- `render.yaml` already defines a simple Docker deploy path
+- `/healthz` should return status `ok`
+
+## Suggested Test Prompts
+
+Use these after deployment to verify the major paths:
+
+- `show learning digest`
+- `show company threat profile for Amazon`
+- `cyber analysis of amazon`
+- `cyber analysis of google.com`
+- `openvas scan https://example.com`
+- `create cyber analysis report for example.com`
+- `search CVE-2021-44228 in cve database`
+- `Explain SQL injection in your security format`
+- `Review this code for vulnerabilities: query = "SELECT * FROM users WHERE name = '" + name + "'" `
+- `Is this phishing? Subject: Update your payroll account immediately`
+
 ## Local Multi-Model Routing
 
 The backend can route different prompt types to different local Ollama models if they are already installed on your machine.
