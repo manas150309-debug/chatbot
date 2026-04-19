@@ -105,6 +105,13 @@ textarea {
   gap: 18px;
 }
 
+.deploy-warning {
+  padding: 16px 18px;
+  border-color: rgba(255, 135, 102, 0.32);
+  background: linear-gradient(180deg, rgba(56, 22, 20, 0.72), rgba(19, 8, 7, 0.92));
+  color: #ffd7cc;
+}
+
 .brand-card,
 .stat-panel,
 .composer,

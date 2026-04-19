@@ -916,7 +916,28 @@ def search_company_directory(query, limit=5):
     if not term:
         return []
 
-    tokens = [token for token in re.findall(r"[a-zA-Z0-9&'.-]{2,}", term) if token]
+    stopwords = {
+        "show",
+        "company",
+        "profile",
+        "threat",
+        "threats",
+        "security",
+        "level",
+        "for",
+        "the",
+        "and",
+        "with",
+        "risk",
+        "analysis",
+        "cyber",
+        "of",
+    }
+    tokens = [
+        token
+        for token in re.findall(r"[a-zA-Z0-9&'.-]{2,}", term)
+        if token and token not in stopwords
+    ]
     connection = db_connect()
     try:
         rows = connection.execute(
@@ -932,11 +953,87 @@ def search_company_directory(query, limit=5):
             item = dict(row)
             haystack = " ".join([item["title"].lower(), item["content"].lower(), item["source_url"].lower()])
             score = 0
+            title = item["title"].lower()
+            if term == title:
+                score += 100
             for token in tokens:
-                if token in item["title"].lower():
+                if token == title:
+                    score += 60
+                elif token in title:
                     score += 14
                 if token in haystack:
                     score += 2
+            if score > 0:
+                scored.append((score, item["id"], item))
+
+        scored.sort(key=lambda entry: (-entry[0], -entry[1]))
+        return [item for _, _, item in scored[:limit]]
+    finally:
+        connection.close()
+
+
+def search_company_threat_profiles(query, limit=3):
+    term = (query or "").strip().lower()
+    if not term:
+        return []
+
+    stopwords = {
+        "show",
+        "company",
+        "profile",
+        "threat",
+        "threats",
+        "security",
+        "level",
+        "for",
+        "the",
+        "and",
+        "with",
+        "risk",
+        "analysis",
+        "cyber",
+        "domain",
+        "based",
+        "specific",
+        "of",
+        "analyze",
+        "like",
+        "this",
+    }
+    tokens = [
+        token
+        for token in re.findall(r"[a-zA-Z0-9&'.-]{2,}", term)
+        if token and token not in stopwords
+    ]
+    connection = db_connect()
+    try:
+        rows = connection.execute(
+            """
+            SELECT id, doc_key, title, category, source_url, content
+            FROM knowledge_docs
+            WHERE category = 'company-threat-profile'
+            """
+        ).fetchall()
+
+        scored = []
+        for row in rows:
+            item = dict(row)
+            haystack = " ".join([item["title"].lower(), item["content"].lower(), item["source_url"].lower()])
+            score = 0
+            title = item["title"].lower()
+            if term == title:
+                score += 100
+            for token in tokens:
+                if token == title:
+                    score += 60
+                elif token in title:
+                    score += 14
+                if token in haystack:
+                    score += 3
+            if "domain based" in term and "domain-based threats" in haystack:
+                score += 8
+            if "company specific" in term and "company-specific threats" in haystack:
+                score += 8
             if score > 0:
                 scored.append((score, item["id"], item))
 
@@ -981,6 +1078,26 @@ def build_cve_response(results):
             for item in results
         ]
     )
+
+
+def build_company_threat_profile_response(results, intro=None):
+    if not results:
+        return "No matching local company threat profile was found."
+
+    sections = []
+    if intro:
+        sections.append(intro.strip())
+
+    for item in results:
+        sections.append(
+            "\n".join(
+                [
+                    f"Company Threat Profile: {item['title']}",
+                    item["content"],
+                ]
+            )
+        )
+    return "\n\n---\n\n".join(sections)
 
 
 def extract_cve_fields(content):
@@ -1568,6 +1685,28 @@ def build_site_analysis_error_reply(url, error_message):
     )
 
 
+def build_company_profile_fallback_reply(query, error_message):
+    if extract_first_url(query) or re.search(r"\b(?:[a-z0-9-]+\.)+[a-z]{2,}\b", normalize_security_query(query or "")):
+        return None
+
+    company_hits = search_company_directory(query, limit=1)
+    if not company_hits:
+        return None
+
+    results = search_company_threat_profiles(company_hits[0]["title"], limit=1)
+    if not results:
+        return None
+    intro = "\n".join(
+        [
+            "Live website analysis could not complete from the current environment.",
+            f"Reason: {error_message}",
+            "",
+            "Showing the local company threat dataset instead:",
+        ]
+    )
+    return build_company_threat_profile_response(results, intro=intro)
+
+
 def load_learning_digest():
     if not LEARNING_DIGEST_PATH.exists():
         return None
@@ -2129,27 +2268,70 @@ def score_openvas_scan(url, header_audit, tls_result=None):
     }
 
 
+def build_openvas_executive_summary(result):
+    if result["severity"] == "Critical":
+        return "The passive OpenVAS-style assessment found a critical exposure pattern on the observed web surface. DarkTraceX is strongest here at readable passive triage, but a full OpenVAS deployment would still be stronger for deep authenticated and NVT-driven validation."
+    if result["severity"] == "High":
+        return "The passive OpenVAS-style assessment found several high-risk indicators on the observed web surface. DarkTraceX emphasizes fast readability and local CVE context, while OpenVAS remains stronger for broader plugin-driven coverage."
+    if result["severity"] == "Medium":
+        return "The passive OpenVAS-style assessment found visible weaknesses on the observed web surface that should be reviewed and hardened. DarkTraceX adds a simpler executive summary than OpenVAS, but it is still a passive evidence layer."
+    return "The passive OpenVAS-style assessment found limited visible exposure on the observed web surface. DarkTraceX provides a cleaner summary for quick review, while OpenVAS is still the stronger choice for deeper vulnerability validation."
+
+
+def build_assessment_protocol_lines():
+    return [
+        "- Protocol: passive HTTP/HTTPS response review",
+        "- Protocol: security header assessment",
+        "- Protocol: TLS certificate inspection when HTTPS is available",
+        "- Protocol: local CVE knowledge correlation from visible indicators only",
+        "- Protocol: local learned exposure scoring from passive features",
+    ]
+
+
+def build_openvas_comparison_lines():
+    return [
+        "- DarkTraceX strength: faster human-readable executive summary and graph-first report card for passive website review.",
+        "- DarkTraceX strength: local CVE context and company threat profiles can still answer when live scanning is blocked.",
+        "- OpenVAS strength: broader NVT/plugin coverage, authenticated checks, and deeper vulnerability validation.",
+        "- Shared area: both express severity and finding-oriented output, but DarkTraceX is currently tuned for passive web-surface assessment.",
+        "- Accuracy note: DarkTraceX should be presented as a readable passive triage layer, not as a universal replacement that definitively beats OpenVAS.",
+    ]
+
+
+def build_cve_report_card_lines(results, limit=3):
+    if not results:
+        return ["- Scorecard: No direct local CVE match was identified from the observed indicators."]
+
+    lines = []
+    for item in results[:limit]:
+        fields = extract_cve_fields(item.get("content", ""))
+        severity = fields.get("Severity", "Unknown")
+        lines.append(f"- {item['doc_key'].upper()} | Severity: {severity} | Title: {item['title']}")
+    return lines
+
+
 def build_openvas_local_response(result):
     lines = [
-        f"Cyber Analysis Report: {result['final_url']}",
+        f"OpenVAS-Style Report: {result['final_url']}",
+        f"Target: {result['final_url']}",
+        f"Scan type: {result['scan_type']}",
         f"Severity: {result['severity']}",
         f"Threat score: {result['threat_score']}/100",
         f"Protection score: {result['protection_score']}/100",
         "",
-        "Easy summary:",
-        (
-            "This passive scan found only limited visible exposure on the public website surface."
-            if result["severity"] == "Low"
-            else "This passive scan found visible web-security gaps that deserve review."
-        ),
+        "Executive Summary:",
+        build_openvas_executive_summary(result),
         "",
-        "Threat graph:",
+        "OpenVAS Risk View:",
         f"- Website protection   {result['graph']['header_hardening']['bar']}",
         f"- Connection safety    {result['graph']['transport_security']['bar']}",
         f"- Certificate health   {result['graph']['tls_hygiene']['bar']}",
         f"- Privacy exposure     {result['graph']['disclosure_control']['bar']}",
         "",
-        "Key findings:",
+        "Assessment Protocol:",
+        *build_assessment_protocol_lines(),
+        "",
+        "OpenVAS Findings:",
     ]
     if result["findings"]:
         lines.extend([f"- [{item['severity'].upper()}] {item['title']}: {item['detail']}" for item in result["findings"][:10]])
@@ -2171,14 +2353,16 @@ def build_openvas_local_response(result):
             ]
         )
 
+    lines.extend(["", "CVE Test Report Card:"])
+    lines.extend(build_cve_report_card_lines(result["cve_matches"], limit=3))
     lines.extend(["", "CVE bug context:"])
     lines.extend(build_cve_bug_context_lines(result["cve_matches"], limit=3))
 
     lines.extend(
         [
             "",
-            "Limit:",
-            "- This is a passive local assessment, not an intrusive vulnerability exploit scan.",
+            "Comparison Report: DarkTraceX vs OpenVAS",
+            *build_openvas_comparison_lines(),
         ]
     )
     return "\n".join(lines)
@@ -2253,7 +2437,13 @@ def score_url_threat(url, header_audit, tls_result=None):
 
 
 def build_url_threat_response(result):
-    cve_lines = ["CVE bug context:", *build_cve_bug_context_lines(result.get("cve_matches", []), limit=3)]
+    cve_lines = [
+        "CVE Test Report Card:",
+        *build_cve_report_card_lines(result.get("cve_matches", []), limit=3),
+        "",
+        "CVE bug context:",
+        *build_cve_bug_context_lines(result.get("cve_matches", []), limit=3),
+    ]
 
     lines = [
         f"URL Threat Report: {result['final_url']}",
@@ -2453,20 +2643,32 @@ def tool_create_openvas_report_file(arguments):
             f"- Protection score: {result['protection_score']}/100",
             f"- HTTP status: {result['status']}",
             "",
-            "## Threat Graph",
+            "## Executive Summary",
+            "",
+            build_openvas_executive_summary(result),
+            "",
+            "## Assessment Protocol",
+            "",
+            *build_assessment_protocol_lines(),
+            "",
+            "## OpenVAS Risk View",
             "",
             f"- Website protection: {result['graph']['header_hardening']['bar']}",
             f"- Connection safety: {result['graph']['transport_security']['bar']}",
             f"- Certificate health: {result['graph']['tls_hygiene']['bar']}",
             f"- Privacy exposure: {result['graph']['disclosure_control']['bar']}",
             "",
-            "## Findings",
+            "## OpenVAS Findings",
             "",
             *[f"- [{item['severity'].upper()}] {item['title']}: {item['detail']}" for item in result["findings"]],
             "",
             "## Offline CVE Hints",
             "",
             *([f"- {item['doc_key'].upper()}: {item['title']}" for item in result["cve_matches"]] or ["- None found from visible fingerprints."]),
+            "",
+            "## Comparison Report: DarkTraceX vs OpenVAS",
+            "",
+            *build_openvas_comparison_lines(),
             "",
             "## Raw Summary",
             "",
@@ -2908,6 +3110,19 @@ def handle_chat(messages):
             "model": "rule-based-defense",
         }
 
+    company_profile_results = search_company_threat_profiles(last_user_text, limit=3) if last_user_text else []
+    if company_profile_results and any(
+        token in normalize_security_query(last_user_text)
+        for token in ["threat", "profile", "company specific", "domain based", "security level", "analyze like this"]
+    ):
+        return {
+            "reply": build_company_threat_profile_response(company_profile_results),
+            "tool_events": [],
+            "memory_hits": [],
+            "knowledge_hits": company_profile_results,
+            "model": "rule-based-defense",
+        }
+
     if detect_site_prediction_request(last_user_text):
         prediction_args = extract_prediction_arguments(last_user_text)
         prediction_result = tool_predict_site_exposure(prediction_args)
@@ -2930,6 +3145,15 @@ def handle_chat(messages):
         try:
             report_result = tool_create_openvas_report_file({"url": url})
         except Exception as exc:
+            fallback_reply = build_company_profile_fallback_reply(last_user_text, str(exc))
+            if fallback_reply:
+                return {
+                    "reply": fallback_reply,
+                    "tool_events": [],
+                    "memory_hits": [],
+                    "knowledge_hits": search_company_threat_profiles(last_user_text, limit=1),
+                    "model": "rule-based-defense",
+                }
             return {
                 "reply": build_site_analysis_error_reply(url or "requested target", str(exc)),
                 "tool_events": [],
@@ -2965,6 +3189,15 @@ def handle_chat(messages):
         try:
             scan_result = tool_openvas_local_scan({"url": url})
         except Exception as exc:
+            fallback_reply = build_company_profile_fallback_reply(last_user_text, str(exc))
+            if fallback_reply:
+                return {
+                    "reply": fallback_reply,
+                    "tool_events": [],
+                    "memory_hits": [],
+                    "knowledge_hits": search_company_threat_profiles(last_user_text, limit=1),
+                    "model": "rule-based-defense",
+                }
             return {
                 "reply": build_site_analysis_error_reply(url or "requested target", str(exc)),
                 "tool_events": [],
@@ -2991,6 +3224,15 @@ def handle_chat(messages):
         try:
             report_result = tool_create_url_report_file({"url": url})
         except Exception as exc:
+            fallback_reply = build_company_profile_fallback_reply(last_user_text, str(exc))
+            if fallback_reply:
+                return {
+                    "reply": fallback_reply,
+                    "tool_events": [],
+                    "memory_hits": [],
+                    "knowledge_hits": search_company_threat_profiles(last_user_text, limit=1),
+                    "model": "rule-based-defense",
+                }
             return {
                 "reply": build_site_analysis_error_reply(url or "requested target", str(exc)),
                 "tool_events": [],
@@ -3025,6 +3267,15 @@ def handle_chat(messages):
         try:
             url_result = tool_url_threat_report({"url": url})
         except Exception as exc:
+            fallback_reply = build_company_profile_fallback_reply(last_user_text, str(exc))
+            if fallback_reply:
+                return {
+                    "reply": fallback_reply,
+                    "tool_events": [],
+                    "memory_hits": [],
+                    "knowledge_hits": search_company_threat_profiles(last_user_text, limit=1),
+                    "model": "rule-based-defense",
+                }
             return {
                 "reply": build_site_analysis_error_reply(url or "requested target", str(exc)),
                 "tool_events": [],
@@ -3051,6 +3302,15 @@ def handle_chat(messages):
         try:
             url_result = tool_url_threat_report({"url": url})
         except Exception as exc:
+            fallback_reply = build_company_profile_fallback_reply(last_user_text, str(exc))
+            if fallback_reply:
+                return {
+                    "reply": fallback_reply,
+                    "tool_events": [],
+                    "memory_hits": [],
+                    "knowledge_hits": search_company_threat_profiles(last_user_text, limit=1),
+                    "model": "rule-based-defense",
+                }
             return {
                 "reply": build_site_analysis_error_reply(url or "requested target", str(exc)),
                 "tool_events": [],

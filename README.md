@@ -155,6 +155,36 @@ Important limit:
 - in offline-only mode, it cannot fetch fresh website data
 - analysis only works for targets that already have a cached local report
 
+## GitHub Deploy
+
+Why the full app does not work on GitHub Pages:
+
+- GitHub Pages serves static files only
+- it does not run `server.py`
+- it does not run SQLite
+- it does not run Ollama or any local model process
+- therefore `/api/chat`, `/api/state`, and the backend analysis routes do not exist there
+
+What was added:
+
+- `.github/workflows/pages.yml` to publish the static UI to GitHub Pages
+- `.nojekyll` so the static assets are served cleanly
+- a visible in-app warning when the site is opened on `github.io`
+
+What GitHub Pages can do:
+
+- show the UI shell
+- load local static assets
+
+What GitHub Pages cannot do for this project:
+
+- live chat analysis
+- local database-backed conversations
+- OpenVAS-style backend scanning
+- Ollama-backed model inference
+
+If you want the full app online, use a host that can run Python plus a model/backend process. GitHub Pages is only suitable for a static demo shell.
+
 ## Local Multi-Model Routing
 
 The backend can route different prompt types to different local Ollama models if they are already installed on your machine.

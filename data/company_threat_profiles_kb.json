@@ -1,0 +1,158 @@
+{
+  "documents": [
+    {
+      "doc_key": "company-threat-amazon",
+      "title": "Amazon",
+      "category": "company-threat-profile",
+      "source_url": "https://amazon.com",
+      "content": "Company: Amazon\nRank: 2\nDomain: amazon.com\nSecurity level: A\nDataset note: The CVE-style IDs below are local threat-profile labels from the provided dataset, not official public CVE records.\n\nDomain-based threats:\n- Credential stuffing attacks (Local threat ID: CVE-2026-0001)\n- Distributed Denial of Service (DDoS) (Local threat ID: CVE-2026-0002)\n- API abuse and bot traffic (Local threat ID: CVE-2026-0003)\n- Cloud misconfiguration vulnerabilities (Local threat ID: CVE-2026-0004)\n\nCompany-specific threats:\n- Fake seller account fraud (Local threat ID: CVE-2026-0005)\n- AWS misconfiguration leading to data leaks (Local threat ID: CVE-2026-0006)\n- Phishing targeting Amazon customers (Local threat ID: CVE-2026-0007)\n- Supply chain manipulation in marketplace (Local threat ID: CVE-2026-0008)"
+    },
+    {
+      "doc_key": "company-threat-unitedhealth-group",
+      "title": "UnitedHealth Group",
+      "category": "company-threat-profile",
+      "source_url": "https://unitedhealthgroup.com",
+      "content": "Company: UnitedHealth Group\nRank: 3\nDomain: unitedhealthgroup.com\nSecurity level: A\nDataset note: The CVE-style IDs below are local threat-profile labels from the provided dataset, not official public CVE records.\n\nDomain-based threats:\n- Healthcare data breaches (Local threat ID: CVE-2026-0009)\n- Ransomware attacks (Local threat ID: CVE-2026-0010)\n- Insider threats (Local threat ID: CVE-2026-0011)\n- API exposure vulnerabilities (Local threat ID: CVE-2026-0012)\n\nCompany-specific threats:\n- Patient record theft (Local threat ID: CVE-2026-0013)\n- Insurance fraud via compromised accounts (Local threat ID: CVE-2026-0014)\n- Targeted ransomware on hospital systems (Local threat ID: CVE-2026-0015)\n- Third-party vendor breaches (Local threat ID: CVE-2026-0016)"
+    },
+    {
+      "doc_key": "company-threat-apple",
+      "title": "Apple",
+      "category": "company-threat-profile",
+      "source_url": "https://apple.com",
+      "content": "Company: Apple\nRank: 4\nDomain: apple.com\nSecurity level: A\nDataset note: The CVE-style IDs below are local threat-profile labels from the provided dataset, not official public CVE records.\n\nDomain-based threats:\n- Zero-day exploits (Local threat ID: CVE-2026-0017)\n- Supply chain attacks (Local threat ID: CVE-2026-0018)\n- Device-level malware (Local threat ID: CVE-2026-0019)\n- Phishing campaigns (Local threat ID: CVE-2026-0020)\n\nCompany-specific threats:\n- iCloud account hijacking (Local threat ID: CVE-2026-0021)\n- App Store malware injection attempts (Local threat ID: CVE-2026-0022)\n- Jailbreak exploit abuse (Local threat ID: CVE-2026-0023)\n- Targeted attacks on Apple ID ecosystem (Local threat ID: CVE-2026-0024)"
+    },
+    {
+      "doc_key": "company-threat-alphabet",
+      "title": "Alphabet",
+      "category": "company-threat-profile",
+      "source_url": "https://abc.xyz",
+      "content": "Company: Alphabet\nRank: 7\nDomain: abc.xyz\nSecurity level: A\nDataset note: The CVE-style IDs below are local threat-profile labels from the provided dataset, not official public CVE records.\n\nDomain-based threats:\n- Cloud service misconfigurations (Local threat ID: CVE-2026-0025)\n- API abuse and data scraping (Local threat ID: CVE-2026-0026)\n- Account takeover attacks (Local threat ID: CVE-2026-0027)\n- Ad fraud and botnets (Local threat ID: CVE-2026-0028)\n\nCompany-specific threats:\n- Gmail phishing campaigns (Local threat ID: CVE-2026-0029)\n- Google Cloud data exposure (Local threat ID: CVE-2026-0030)\n- YouTube content manipulation bots (Local threat ID: CVE-2026-0031)\n- OAuth token hijacking (Local threat ID: CVE-2026-0032)"
+    },
+    {
+      "doc_key": "company-threat-jpmorgan-chase",
+      "title": "JPMorgan Chase",
+      "category": "company-threat-profile",
+      "source_url": "https://jpmorganchase.com",
+      "content": "Company: JPMorgan Chase\nRank: 11\nDomain: jpmorganchase.com\nSecurity level: A\nDataset note: The CVE-style IDs below are local threat-profile labels from the provided dataset, not official public CVE records.\n\nDomain-based threats:\n- Financial fraud attacks (Local threat ID: CVE-2026-0033)\n- Phishing and credential theft (Local threat ID: CVE-2026-0034)\n- Insider threats (Local threat ID: CVE-2026-0035)\n- DDoS on banking services (Local threat ID: CVE-2026-0036)\n\nCompany-specific threats:\n- Unauthorized wire transfers (Local threat ID: CVE-2026-0037)\n- Mobile banking malware (Local threat ID: CVE-2026-0038)\n- SWIFT network exploitation attempts (Local threat ID: CVE-2026-0039)\n- High-value account targeting (Local threat ID: CVE-2026-0040)"
+    },
+    {
+      "doc_key": "company-threat-microsoft",
+      "title": "Microsoft",
+      "category": "company-threat-profile",
+      "source_url": "https://microsoft.com",
+      "content": "Company: Microsoft\nRank: 14\nDomain: microsoft.com\nSecurity level: A\nDataset note: The CVE-style IDs below are local threat-profile labels from the provided dataset, not official public CVE records.\n\nDomain-based threats:\n- Zero-day vulnerabilities (Local threat ID: CVE-2026-0049)\n- Cloud misconfigurations (Local threat ID: CVE-2026-0050)\n- Credential theft attacks (Local threat ID: CVE-2026-0051)\n- Ransomware attacks (Local threat ID: CVE-2026-0052)\n\nCompany-specific threats:\n- Azure data exposure (Local threat ID: CVE-2026-0053)\n- Office 365 phishing attacks (Local threat ID: CVE-2026-0054)\n- Windows exploit targeting (Local threat ID: CVE-2026-0055)\n- Teams spoofing attacks (Local threat ID: CVE-2026-0056)"
+    },
+    {
+      "doc_key": "company-threat-bank-of-america",
+      "title": "Bank of America",
+      "category": "company-threat-profile",
+      "source_url": "https://bankofamerica.com",
+      "content": "Company: Bank of America\nRank: 17\nDomain: bankofamerica.com\nSecurity level: A\nDataset note: The CVE-style IDs below are local threat-profile labels from the provided dataset, not official public CVE records.\n\nDomain-based threats:\n- Banking fraud (Local threat ID: CVE-2026-0057)\n- Credential stuffing (Local threat ID: CVE-2026-0058)\n- Phishing campaigns (Local threat ID: CVE-2026-0059)\n- DDoS attacks (Local threat ID: CVE-2026-0060)\n\nCompany-specific threats:\n- Account takeover fraud (Local threat ID: CVE-2026-0061)\n- ATM malware attacks (Local threat ID: CVE-2026-0062)\n- Mobile banking trojans (Local threat ID: CVE-2026-0063)\n- Wire transfer scams (Local threat ID: CVE-2026-0064)"
+    },
+    {
+      "doc_key": "company-threat-meta-platforms",
+      "title": "Meta Platforms",
+      "category": "company-threat-profile",
+      "source_url": "https://atmeta.com",
+      "content": "Company: Meta Platforms\nRank: 22\nDomain: atmeta.com\nSecurity level: A\nDataset note: The CVE-style IDs below are local threat-profile labels from the provided dataset, not official public CVE records.\n\nDomain-based threats:\n- Social engineering attacks (Local threat ID: CVE-2026-0081)\n- Account hijacking (Local threat ID: CVE-2026-0082)\n- API abuse and bot activity (Local threat ID: CVE-2026-0083)\n- Data scraping attacks (Local threat ID: CVE-2026-0084)\n\nCompany-specific threats:\n- Facebook account takeovers (Local threat ID: CVE-2026-0085)\n- Instagram phishing scams (Local threat ID: CVE-2026-0086)\n- Ad platform abuse (Local threat ID: CVE-2026-0087)\n- Fake profile bot networks (Local threat ID: CVE-2026-0088)"
+    },
+    {
+      "doc_key": "company-threat-nvidia",
+      "title": "Nvidia",
+      "category": "company-threat-profile",
+      "source_url": "https://nvidia.com",
+      "content": "Company: Nvidia\nRank: 31\nDomain: nvidia.com\nSecurity level: A\nDataset note: The CVE-style IDs below are local threat-profile labels from the provided dataset, not official public CVE records.\n\nDomain-based threats:\n- Supply chain attacks (Local threat ID: CVE-2026-0105)\n- Firmware vulnerabilities (Local threat ID: CVE-2026-0106)\n- GPU driver exploits (Local threat ID: CVE-2026-0107)\n- Intellectual property theft (Local threat ID: CVE-2026-0108)\n\nCompany-specific threats:\n- AI model theft (Local threat ID: CVE-2026-0109)\n- CUDA exploit vulnerabilities (Local threat ID: CVE-2026-0110)\n- Datacenter GPU attacks (Local threat ID: CVE-2026-0111)\n- Driver-level privilege escalation (Local threat ID: CVE-2026-0112)"
+    },
+    {
+      "doc_key": "company-threat-comcast",
+      "title": "Comcast",
+      "category": "company-threat-profile",
+      "source_url": "https://comcastcorporation.com",
+      "content": "Company: Comcast\nRank: 35\nDomain: comcastcorporation.com\nSecurity level: A\nDataset note: The CVE-style IDs below are local threat-profile labels from the provided dataset, not official public CVE records.\n\nDomain-based threats:\n- Network attacks (Local threat ID: CVE-2026-0129)\n- DDoS attacks (Local threat ID: CVE-2026-0130)\n- Data interception (Local threat ID: CVE-2026-0131)\n- Botnet exploitation (Local threat ID: CVE-2026-0132)\n\nCompany-specific threats:\n- Cable network breaches (Local threat ID: CVE-2026-0133)\n- Customer data leaks (Local threat ID: CVE-2026-0134)\n- Router firmware exploits (Local threat ID: CVE-2026-0135)\n- Streaming service piracy attacks (Local threat ID: CVE-2026-0136)"
+    },
+    {
+      "doc_key": "company-threat-atandt",
+      "title": "AT&T",
+      "category": "company-threat-profile",
+      "source_url": "https://att.com",
+      "content": "Company: AT&T\nRank: 37\nDomain: att.com\nSecurity level: A\nDataset note: The CVE-style IDs below are local threat-profile labels from the provided dataset, not official public CVE records.\n\nDomain-based threats:\n- Telecom network attacks (Local threat ID: CVE-2026-0137)\n- SIM swap fraud (Local threat ID: CVE-2026-0138)\n- DDoS attacks (Local threat ID: CVE-2026-0139)\n- Data interception (Local threat ID: CVE-2026-0140)\n\nCompany-specific threats:\n- Customer data breaches (Local threat ID: CVE-2026-0141)\n- 5G infrastructure exploits (Local threat ID: CVE-2026-0142)\n- SIM hijacking attacks (Local threat ID: CVE-2026-0143)\n- Enterprise connectivity disruption (Local threat ID: CVE-2026-0144)"
+    },
+    {
+      "doc_key": "company-threat-tesla",
+      "title": "Tesla",
+      "category": "company-threat-profile",
+      "source_url": "https://tesla.com",
+      "content": "Company: Tesla\nRank: 43\nDomain: tesla.com\nSecurity level: A\nDataset note: The CVE-style IDs below are local threat-profile labels from the provided dataset, not official public CVE records.\n\nDomain-based threats:\n- IoT vulnerabilities (Local threat ID: CVE-2026-0161)\n- Firmware exploits (Local threat ID: CVE-2026-0162)\n- Remote access attacks (Local threat ID: CVE-2026-0163)\n- Supply chain attacks (Local threat ID: CVE-2026-0164)\n\nCompany-specific threats:\n- Vehicle remote control exploits (Local threat ID: CVE-2026-0165)\n- Autopilot system vulnerabilities (Local threat ID: CVE-2026-0166)\n- Charging network attacks (Local threat ID: CVE-2026-0167)\n- Tesla account takeover (Local threat ID: CVE-2026-0168)"
+    },
+    {
+      "doc_key": "company-threat-johnson-and-johnson",
+      "title": "Johnson & Johnson",
+      "category": "company-threat-profile",
+      "source_url": "https://jnj.com",
+      "content": "Company: Johnson & Johnson\nRank: 48\nDomain: jnj.com\nSecurity level: A\nDataset note: The CVE-style IDs below are local threat-profile labels from the provided dataset, not official public CVE records.\n\nDomain-based threats:\n- Healthcare data breaches (Local threat ID: CVE-2026-0177)\n- Ransomware attacks (Local threat ID: CVE-2026-0178)\n- Supply chain attacks (Local threat ID: CVE-2026-0179)\n- Insider threats (Local threat ID: CVE-2026-0180)\n\nCompany-specific threats:\n- Medical device vulnerabilities (Local threat ID: CVE-2026-0181)\n- Drug research data theft (Local threat ID: CVE-2026-0182)\n- Clinical trial data breaches (Local threat ID: CVE-2026-0183)\n- Pharmaceutical supply chain attacks (Local threat ID: CVE-2026-0184)"
+    },
+    {
+      "doc_key": "company-threat-american-express",
+      "title": "American Express",
+      "category": "company-threat-profile",
+      "source_url": "https://americanexpress.com",
+      "content": "Company: American Express\nRank: 58\nDomain: americanexpress.com\nSecurity level: A\nDataset note: The CVE-style IDs below are local threat-profile labels from the provided dataset, not official public CVE records.\n\nDomain-based threats:\n- Payment fraud (Local threat ID: CVE-2026-0193)\n- Phishing attacks (Local threat ID: CVE-2026-0194)\n- Credential stuffing (Local threat ID: CVE-2026-0195)\n- API vulnerabilities (Local threat ID: CVE-2026-0196)\n\nCompany-specific threats:\n- Credit card fraud schemes (Local threat ID: CVE-2026-0197)\n- Transaction data breaches (Local threat ID: CVE-2026-0198)\n- Account takeover attacks (Local threat ID: CVE-2026-0199)\n- Merchant system compromise (Local threat ID: CVE-2026-0200)"
+    },
+    {
+      "doc_key": "company-threat-oracle",
+      "title": "Oracle",
+      "category": "company-threat-profile",
+      "source_url": "https://oracle.com",
+      "content": "Company: Oracle\nRank: 73\nDomain: oracle.com\nSecurity level: A\nDataset note: The CVE-style IDs below are local threat-profile labels from the provided dataset, not official public CVE records.\n\nDomain-based threats:\n- Database vulnerabilities (Local threat ID: CVE-2026-0233)\n- Cloud misconfigurations (Local threat ID: CVE-2026-0234)\n- Zero-day exploits (Local threat ID: CVE-2026-0235)\n- API security flaws (Local threat ID: CVE-2026-0236)\n\nCompany-specific threats:\n- Oracle DB exploit attempts (Local threat ID: CVE-2026-0237)\n- Enterprise cloud data leaks (Local threat ID: CVE-2026-0238)\n- ERP system compromise (Local threat ID: CVE-2026-0239)\n- Privilege escalation in DB systems (Local threat ID: CVE-2026-0240)"
+    },
+    {
+      "doc_key": "company-threat-netflix",
+      "title": "Netflix",
+      "category": "company-threat-profile",
+      "source_url": "https://netflix.com",
+      "content": "Company: Netflix\nRank: 106\nDomain: netflix.com\nSecurity level: A\nDataset note: The CVE-style IDs below are local threat-profile labels from the provided dataset, not official public CVE records.\n\nDomain-based threats:\n- Account takeover attacks (Local threat ID: CVE-2026-0345)\n- Credential stuffing (Local threat ID: CVE-2026-0346)\n- DDoS attacks (Local threat ID: CVE-2026-0347)\n- Content piracy (Local threat ID: CVE-2026-0348)\n\nCompany-specific threats:\n- Account sharing abuse exploitation (Local threat ID: CVE-2026-0349)\n- Streaming infrastructure attacks (Local threat ID: CVE-2026-0350)\n- Recommendation algorithm manipulation (Local threat ID: CVE-2026-0351)\n- User data leakage (Local threat ID: CVE-2026-0352)"
+    },
+    {
+      "doc_key": "company-threat-cisco-systems",
+      "title": "Cisco Systems",
+      "category": "company-threat-profile",
+      "source_url": "https://cisco.com",
+      "content": "Company: Cisco Systems\nRank: 130\nDomain: cisco.com\nSecurity level: A\nDataset note: The CVE-style IDs below are local threat-profile labels from the provided dataset, not official public CVE records.\n\nDomain-based threats:\n- Network vulnerabilities (Local threat ID: CVE-2026-0449)\n- Firmware exploits (Local threat ID: CVE-2026-0450)\n- Zero-day vulnerabilities (Local threat ID: CVE-2026-0451)\n- DDoS attacks (Local threat ID: CVE-2026-0452)\n\nCompany-specific threats:\n- Router firmware vulnerabilities (Local threat ID: CVE-2026-0453)\n- Enterprise network breaches (Local threat ID: CVE-2026-0454)\n- Switch exploitation attacks (Local threat ID: CVE-2026-0455)\n- Network backdoor insertion (Local threat ID: CVE-2026-0456)"
+    },
+    {
+      "doc_key": "company-threat-salesforce",
+      "title": "Salesforce",
+      "category": "company-threat-profile",
+      "source_url": "https://salesforce.com",
+      "content": "Company: Salesforce\nRank: 131\nDomain: salesforce.com\nSecurity level: A\nDataset note: The CVE-style IDs below are local threat-profile labels from the provided dataset, not official public CVE records.\n\nDomain-based threats:\n- Cloud misconfiguration (Local threat ID: CVE-2026-0457)\n- API vulnerabilities (Local threat ID: CVE-2026-0458)\n- Credential theft (Local threat ID: CVE-2026-0459)\n- Data breaches (Local threat ID: CVE-2026-0460)\n\nCompany-specific threats:\n- CRM data leakage (Local threat ID: CVE-2026-0461)\n- Unauthorized access to client data (Local threat ID: CVE-2026-0462)\n- API abuse attacks (Local threat ID: CVE-2026-0463)\n- Third-party integration vulnerabilities (Local threat ID: CVE-2026-0464)"
+    },
+    {
+      "doc_key": "company-threat-adobe",
+      "title": "Adobe",
+      "category": "company-threat-profile",
+      "source_url": "https://adobe.com",
+      "content": "Company: Adobe\nRank: 132\nDomain: adobe.com\nSecurity level: A\nDataset note: The CVE-style IDs below are local threat-profile labels from the provided dataset, not official public CVE records.\n\nDomain-based threats:\n- Software vulnerabilities (Local threat ID: CVE-2026-0465)\n- Zero-day exploits (Local threat ID: CVE-2026-0466)\n- Phishing attacks (Local threat ID: CVE-2026-0467)\n- Credential theft (Local threat ID: CVE-2026-0468)\n\nCompany-specific threats:\n- PDF exploit vulnerabilities (Local threat ID: CVE-2026-0469)\n- Creative Cloud account hijacking (Local threat ID: CVE-2026-0470)\n- Software license abuse (Local threat ID: CVE-2026-0471)\n- Malicious plugin injection (Local threat ID: CVE-2026-0472)"
+    },
+    {
+      "doc_key": "company-threat-airbnb",
+      "title": "Airbnb",
+      "category": "company-threat-profile",
+      "source_url": "https://airbnb.com",
+      "content": "Company: Airbnb\nRank: 134\nDomain: airbnb.com\nSecurity level: A\nDataset note: The CVE-style IDs below are local threat-profile labels from the provided dataset, not official public CVE records.\n\nDomain-based threats:\n- Account takeover attacks (Local threat ID: CVE-2026-0481)\n- Phishing attacks (Local threat ID: CVE-2026-0482)\n- Payment fraud (Local threat ID: CVE-2026-0483)\n- API abuse (Local threat ID: CVE-2026-0484)\n\nCompany-specific threats:\n- Fake listing scams (Local threat ID: CVE-2026-0485)\n- Host account hijacking (Local threat ID: CVE-2026-0486)\n- Guest identity fraud (Local threat ID: CVE-2026-0487)\n- Unauthorized payment transactions (Local threat ID: CVE-2026-0488)"
+    },
+    {
+      "doc_key": "company-threat-uber-technologies",
+      "title": "Uber Technologies",
+      "category": "company-threat-profile",
+      "source_url": "https://uber.com",
+      "content": "Company: Uber Technologies\nRank: 135\nDomain: uber.com\nSecurity level: A\nDataset note: The CVE-style IDs below are local threat-profile labels from the provided dataset, not official public CVE records.\n\nDomain-based threats:\n- Account takeover attacks (Local threat ID: CVE-2026-0489)\n- API abuse (Local threat ID: CVE-2026-0490)\n- Payment fraud (Local threat ID: CVE-2026-0491)\n- Location data exposure (Local threat ID: CVE-2026-0492)\n\nCompany-specific threats:\n- Driver account hijacking (Local threat ID: CVE-2026-0493)\n- Ride spoofing attacks (Local threat ID: CVE-2026-0494)\n- Fare manipulation fraud (Local threat ID: CVE-2026-0495)\n- User location tracking abuse (Local threat ID: CVE-2026-0496)"
+    },
+    {
+      "doc_key": "company-threat-palo-alto-networks",
+      "title": "Palo Alto Networks",
+      "category": "company-threat-profile",
+      "source_url": "https://paloaltonetworks.com",
+      "content": "Company: Palo Alto Networks\nRank: 136\nDomain: paloaltonetworks.com\nSecurity level: A\nDataset note: The CVE-style IDs below are local threat-profile labels from the provided dataset, not official public CVE records.\n\nDomain-based threats:\n- Zero-day vulnerabilities (Local threat ID: CVE-2026-0497)\n- Network attacks (Local threat ID: CVE-2026-0498)\n- Advanced persistent threats (Local threat ID: CVE-2026-0499)\n- Cloud security flaws (Local threat ID: CVE-2026-0500)\n\nCompany-specific threats:\n- Firewall bypass exploits (Local threat ID: CVE-2026-0501)\n- Security platform vulnerabilities (Local threat ID: CVE-2026-0502)\n- Threat intelligence manipulation (Local threat ID: CVE-2026-0503)\n- Zero-day exploit targeting (Local threat ID: CVE-2026-0504)"
+    }
+  ]
+}

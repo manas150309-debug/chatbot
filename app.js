@@ -12,6 +12,7 @@ const noteStatusEl = document.querySelector('#note-status');
 const recentNotesEl = document.querySelector('#recent-notes');
 const classifierLogEl = document.querySelector('#classifier-log');
 const threatOverviewEl = document.querySelector('#threat-overview');
+const deployWarningEl = document.querySelector('#deploy-warning');
 const templateEl = document.querySelector('#message-template');
 const feedTemplateEl = document.querySelector('#feed-item-template');
 
@@ -26,6 +27,25 @@ const starterMessages = [
 let conversationId = null;
 let messages = loadSession();
 let pending = false;
+
+function isGitHubPagesRuntime() {
+  return window.location.hostname.endsWith('github.io');
+}
+
+function renderDeployWarning() {
+  if (!deployWarningEl) {
+    return;
+  }
+
+  if (!isGitHubPagesRuntime()) {
+    deployWarningEl.hidden = true;
+    return;
+  }
+
+  deployWarningEl.hidden = false;
+  deployWarningEl.innerHTML =
+    '<strong>GitHub Pages mode:</strong> this deployment only serves the static UI. The Python backend, SQLite database, and Ollama model do not run on GitHub Pages, so live chat analysis requires a separate backend host.';
+}
 
 function loadSession() {
   const stored = localStorage.getItem(storageKey);
@@ -154,7 +174,7 @@ function addFeedItem(container, title, body) {
 function parseGraphFromReply(reply) {
   const text = reply || '';
   const scoreMatch = text.match(/Threat score:\s*(\d+)\/100[\s\S]*?Protection score:\s*(\d+)\/100/i);
-  const urlMatch = text.match(/(?:Cyber Analysis Report|URL Threat Report):\s*(.+)/i);
+  const urlMatch = text.match(/(?:Cyber Analysis Report|URL Threat Report|OpenVAS-Style Report):\s*(.+)/i);
   const severityMatch = text.match(/Severity:\s*(.+)/i);
   const graphPatterns = {
     header_hardening: /Website protection\s+\[[#-]+\]\s+(\d+)\/100/i,
@@ -437,6 +457,7 @@ exportJsonEl.addEventListener('click', () => {
 renderMessages(messages);
 updateInsights([]);
 fetchState().catch(() => {});
+renderDeployWarning();
 autoResize(promptEl);
 autoResize(noteInputEl);
 setStatus('Ready');
