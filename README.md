@@ -218,6 +218,23 @@ Use these after deployment to verify the major paths:
 
 - `show learning digest`
 - `show company threat profile for Amazon`
+
+## Demo File For IP Support
+
+If you need a compact demo artifact for a patent or copyright packet, use:
+
+- `demo_ip_protection.py`
+- `DEMO_FOR_PATENT_OR_COPYRIGHT.md`
+
+Run it with:
+
+```bash
+cd /Users/manas/Desktop/chatbot
+python3 demo_ip_protection.py
+```
+
+This is a technical demonstration file only. It is not legal advice and it is
+not a substitute for an actual filing.
 - `cyber analysis of amazon`
 - `cyber analysis of google.com`
 - `openvas scan https://example.com`
