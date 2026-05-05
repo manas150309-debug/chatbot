@@ -1966,16 +1966,24 @@ def build_site_analysis_error_reply(url, error_message):
     )
 
 
-def build_company_profile_fallback_reply(query, error_message):
-    if extract_first_url(query) or re.search(r"\b(?:[a-z0-9-]+\.)+[a-z]{2,}\b", normalize_security_query(query or "")):
-        return None
+def resolve_company_profile_from_query(query):
+    target_url = extract_target_url(query or "")
+    if target_url:
+        profile = infer_company_profile_for_url(target_url)
+        if profile:
+            return profile
 
-    company_hits = search_company_directory(query, limit=1)
+    company_hits = search_company_directory(query or "", limit=1)
     if not company_hits:
         return None
 
     results = search_company_threat_profiles(company_hits[0]["title"], limit=1)
-    if not results:
+    return results[0] if results else None
+
+
+def build_company_profile_fallback_reply(query, error_message):
+    profile = resolve_company_profile_from_query(query)
+    if not profile:
         return None
     intro = "\n".join(
         [
@@ -1985,7 +1993,7 @@ def build_company_profile_fallback_reply(query, error_message):
             "Showing the local company threat dataset instead:",
         ]
     )
-    return build_company_threat_profile_response(results, intro=intro)
+    return build_company_threat_profile_response([profile], intro=intro)
 
 
 def load_learning_digest():
@@ -3714,6 +3722,40 @@ def handle_chat(messages):
         try:
             report_result = tool_create_openvas_report_file({"url": url})
         except Exception as exc:
+            profile = resolve_company_profile_from_query(last_user_text)
+            if profile:
+                profile_path = create_company_profile_report_file(profile)
+                fields = extract_company_profile_fields(profile.get("content", ""))
+                return {
+                    "reply": "\n".join(
+                        [
+                            f"Saved cyber analysis report for requested URL: {url}",
+                            f"Final analyzed URL: https://{fields.get('Domain')}" if fields.get("Domain") else f"Final analyzed URL: {url}",
+                            "Severity: Informational",
+                            f"Report path: {profile_path}",
+                            "",
+                            "Live website analysis was unavailable, so DarkTraceX created the report from the local company threat profile dataset instead.",
+                        ]
+                    ),
+                    "tool_events": [
+                        {
+                            "tool_name": "create_openvas_report_file",
+                            "arguments": {"url": url},
+                            "result": {
+                                "report_path": profile_path,
+                                "url": f"https://{fields.get('Domain')}" if fields.get("Domain") else (url or fields.get("Company", "")),
+                                "severity": "Informational",
+                                "threat_score": 0,
+                                "protection_score": 0,
+                                "graph": {},
+                                "scan_type": "local-company-threat-profile",
+                            },
+                        }
+                    ],
+                    "memory_hits": [],
+                    "knowledge_hits": [profile],
+                    "model": "rule-based-defense",
+                }
             fallback_reply = build_company_profile_fallback_reply(last_user_text, str(exc))
             if fallback_reply:
                 return {
@@ -3793,6 +3835,38 @@ def handle_chat(messages):
         try:
             report_result = tool_create_url_report_file({"url": url})
         except Exception as exc:
+            profile = resolve_company_profile_from_query(last_user_text)
+            if profile:
+                profile_path = create_company_profile_report_file(profile)
+                fields = extract_company_profile_fields(profile.get("content", ""))
+                return {
+                    "reply": "\n".join(
+                        [
+                            f"Saved cyber analysis report for requested URL: {url}",
+                            f"Final analyzed URL: https://{fields.get('Domain')}" if fields.get("Domain") else f"Final analyzed URL: {url}",
+                            "Severity: Informational",
+                            f"Report path: {profile_path}",
+                            "",
+                            "Live website analysis was unavailable, so DarkTraceX created the report from the local company threat profile dataset instead.",
+                        ]
+                    ),
+                    "tool_events": [
+                        {
+                            "tool_name": "create_url_report_file",
+                            "arguments": {"url": url},
+                            "result": {
+                                "report_path": profile_path,
+                                "url": f"https://{fields.get('Domain')}" if fields.get("Domain") else (url or fields.get("Company", "")),
+                                "severity": "Informational",
+                                "threat_score": 0,
+                                "graph": {},
+                            },
+                        }
+                    ],
+                    "memory_hits": [],
+                    "knowledge_hits": [profile],
+                    "model": "rule-based-defense",
+                }
             fallback_reply = build_company_profile_fallback_reply(last_user_text, str(exc))
             if fallback_reply:
                 return {
