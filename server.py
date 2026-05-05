@@ -1100,6 +1100,76 @@ def build_company_threat_profile_response(results, intro=None):
     return "\n\n---\n\n".join(sections)
 
 
+def build_company_quick_response(results):
+    if not results:
+        return "No matching local company threat profile was found."
+
+    item = results[0]
+    fields = extract_company_profile_fields(item.get("content", ""))
+    company = fields.get("Company", item.get("title", "Unknown company"))
+    rank = fields.get("Rank", "Unknown")
+    domain = fields.get("Domain", item.get("source_url", "Unknown"))
+    security_level = fields.get("Security level", "Unknown")
+    domain_threats = fields.get("domain_based_threats", [])[:4]
+    company_threats = fields.get("company_specific_threats", [])[:4]
+
+    lines = [
+        f"Company Threat Profile: {company}",
+        f"Rank: {rank}",
+        f"Domain: {domain}",
+        f"Security level: {security_level}",
+        "",
+        "Easy summary:",
+        f"DarkTraceX found a local threat profile for {company}. This is a company-level defensive summary from the offline dataset, not a live website scan.",
+        "",
+        "Domain-based threats:",
+    ]
+    lines.extend([f"- {item}" for item in domain_threats] or ["- No domain-based threats listed."])
+    lines.extend(["", "Company-specific threats:"])
+    lines.extend([f"- {item}" for item in company_threats] or ["- No company-specific threats listed."])
+    lines.extend(
+        [
+            "",
+            "What you can ask next:",
+            f"- `cyber analysis of {company.lower()}`",
+            f"- `show company threat profile for {company}`",
+            f"- `create cyber analysis report for https://{domain}`" if domain and "://" not in domain else f"- `create cyber analysis report for {domain}`",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def extract_company_profile_fields(content):
+    fields = {}
+    section = None
+    domain_threats = []
+    company_threats = []
+
+    for raw_line in content.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        if line == "Domain-based threats:":
+            section = "domain"
+            continue
+        if line == "Company-specific threats:":
+            section = "company"
+            continue
+        if ": " in line and not line.startswith("- "):
+            key, value = line.split(": ", 1)
+            fields[key.strip()] = value.strip()
+            continue
+        if line.startswith("- "):
+            if section == "domain":
+                domain_threats.append(line[2:])
+            elif section == "company":
+                company_threats.append(line[2:])
+
+    fields["domain_based_threats"] = domain_threats
+    fields["company_specific_threats"] = company_threats
+    return fields
+
+
 def extract_cve_fields(content):
     fields = {}
     for line in content.splitlines():
@@ -1150,6 +1220,13 @@ def build_cve_bug_context_lines(results, limit=3):
 
     lines = []
     for item in results[:limit]:
+        if item.get("category") == "company-threat-profile":
+            fields = extract_company_profile_fields(item.get("content", ""))
+            for threat_line in (fields.get("domain_based_threats", []) + fields.get("company_specific_threats", []))[:limit]:
+                lines.append(f"- {threat_line}")
+            if lines:
+                return lines
+            continue
         fields = extract_cve_fields(item.get("content", ""))
         severity = fields.get("Severity", "Unknown")
         summary = fields.get("Summary") or fields.get("Description") or item.get("title", "")
@@ -1404,6 +1481,25 @@ def detect_log_analysis_request(text):
 def detect_attack_label_request(text):
     candidate = (text or "").lower()
     return "what attack" in candidate or "attack type" in candidate or "classify attack" in candidate
+
+
+def detect_direct_company_prompt(text):
+    candidate = (text or "").strip()
+    if not candidate:
+        return False
+
+    normalized = normalize_security_query(candidate)
+    if extract_first_url(candidate):
+        return False
+    if re.search(r"\b(?:[a-z0-9-]+\.)+[a-z]{2,}\b", normalized):
+        return False
+    if len(re.findall(r"[a-zA-Z0-9&'.-]+", normalized)) > 4:
+        return False
+
+    company_hits = search_company_directory(candidate, limit=1)
+    if not company_hits:
+        return False
+    return company_hits[0]["title"].lower() == candidate.lower() or company_hits[0]["title"].lower() == normalized.lower()
 
 
 def build_classifier_response(result):
@@ -2304,10 +2400,42 @@ def build_cve_report_card_lines(results, limit=3):
 
     lines = []
     for item in results[:limit]:
+        if item.get("category") == "company-threat-profile":
+            fields = extract_company_profile_fields(item.get("content", ""))
+            lines.append(
+                f"- {fields.get('Company', item['title'])} | Security level: {fields.get('Security level', 'Unknown')} | Local company threat profile"
+            )
+            for threat_line in (fields.get("domain_based_threats", []) + fields.get("company_specific_threats", []))[:3]:
+                lines.append(f"  {threat_line}")
+            continue
         fields = extract_cve_fields(item.get("content", ""))
         severity = fields.get("Severity", "Unknown")
         lines.append(f"- {item['doc_key'].upper()} | Severity: {severity} | Title: {item['title']}")
     return lines
+
+
+def infer_company_profile_for_url(url):
+    parsed = urllib.parse.urlparse(url or "")
+    hostname = (parsed.hostname or "").lower()
+    if not hostname:
+        return None
+
+    hostname = re.sub(r"^www\.", "", hostname)
+    hostname_tokens = [token for token in re.findall(r"[a-z0-9]+", hostname) if len(token) >= 3]
+    candidates = [hostname]
+    if hostname_tokens:
+        candidates.extend(hostname_tokens)
+        candidates.append(hostname_tokens[0])
+
+    seen = set()
+    for candidate in candidates:
+        if candidate in seen:
+            continue
+        seen.add(candidate)
+        results = search_company_threat_profiles(candidate, limit=1)
+        if results:
+            return results[0]
+    return None
 
 
 def build_openvas_local_response(result):
@@ -3111,6 +3239,15 @@ def handle_chat(messages):
         }
 
     company_profile_results = search_company_threat_profiles(last_user_text, limit=3) if last_user_text else []
+    if detect_direct_company_prompt(last_user_text) and company_profile_results:
+        return {
+            "reply": build_company_quick_response(company_profile_results),
+            "tool_events": [],
+            "memory_hits": [],
+            "knowledge_hits": company_profile_results,
+            "model": "rule-based-defense",
+        }
+
     if company_profile_results and any(
         token in normalize_security_query(last_user_text)
         for token in ["threat", "profile", "company specific", "domain based", "security level", "analyze like this"]
