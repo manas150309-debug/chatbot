@@ -1428,6 +1428,23 @@ def detect_learning_digest_request(text):
     return any(phrase in candidate for phrase in phrases)
 
 
+def detect_capabilities_request(text):
+    candidate = normalize_security_query(text)
+    phrases = [
+        "what can you do",
+        "what do you do",
+        "what you can do",
+        "what can u do",
+        "help me",
+        "show capabilities",
+        "show features",
+        "your features",
+        "your capabilities",
+        "how can you help",
+    ]
+    return any(phrase in candidate for phrase in phrases)
+
+
 def detect_site_prediction_request(text):
     candidate = normalize_security_query(text)
     markers = ["predict", "dataset", "threat_score", "protection_score", "tls_days_remaining", "findings"]
@@ -1510,6 +1527,37 @@ def build_classifier_response(result):
             f"Confidence: {result['confidence']}",
             "Top scores:",
             *[f"- {item['label']}: {item['score']}" for item in result["scores"]],
+        ]
+    )
+
+
+def build_capabilities_response():
+    return "\n".join(
+        [
+            "DarkTraceX can help with these local defensive tasks:",
+            "",
+            "- Cyber analysis of a public website or URL",
+            "  Example: `cyber analysis of google.com`",
+            "- Create a saved cyber analysis report",
+            "  Example: `create cyber analysis report for tesla.com`",
+            "- Show a company threat profile from the offline dataset",
+            "  Example: `show company threat profile for Amazon`",
+            "- Search the local CVE database",
+            "  Example: `search CVE-2021-44228 in cve database`",
+            "- Check whether an email or message is phishing",
+            "  Example: `is this phishing? Subject: Update your KYC immediately`",
+            "- Review code for security issues and show a safer fix",
+            "  Example: `find vulnerabilities in this code and give secure fix`",
+            "- Analyze suspicious logs",
+            "  Example: `analyze this log and rate the threat level`",
+            "- Save and search notes",
+            "  Example: `remember this note: prod uses strict CSP`",
+            "- Show the learning digest",
+            "  Example: `show learning digest`",
+            "",
+            "Current limits:",
+            "- This is strongest at passive website review, local knowledge retrieval, phishing checks, CVE lookup, and secure code explanation.",
+            "- It is not a full authenticated OpenVAS replacement or deep exploit scanner.",
         ]
     )
 
@@ -3184,6 +3232,15 @@ def handle_chat(messages):
     if sql_injection_result:
         return {
             "reply": build_sql_injection_response(sql_injection_result),
+            "tool_events": [],
+            "memory_hits": [],
+            "knowledge_hits": [],
+            "model": "rule-based-defense",
+        }
+
+    if detect_capabilities_request(last_user_text):
+        return {
+            "reply": build_capabilities_response(),
             "tool_events": [],
             "memory_hits": [],
             "knowledge_hits": [],
