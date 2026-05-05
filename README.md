@@ -105,6 +105,19 @@ Outputs:
 - `reports/batch_summary.md`
 - one markdown report per target under `reports/`
 
+DarkTraceX also supports an in-app batch cyber analysis flow capped at `50` targets per run.
+
+Examples:
+
+- `create batch cyber analysis report for 50 websites`
+- `batch cyber analysis report for amazon.com, microsoft.com, tesla.com`
+
+Outputs from the in-app batch flow:
+
+- batch markdown report under `reports/`
+- batch CSV summary under `reports/`
+- batch PDF under `reports/`
+
 If you want the models to learn from a larger approved dataset, put up to 1000 authorized targets in `authorized_sites.csv`, generate `evaluation_report.csv`, then retrain the models.
 
 For safe local experimentation without scanning third-party targets, you can also generate a synthetic website training corpus:
@@ -235,6 +248,23 @@ python3 demo_ip_protection.py
 
 This is a technical demonstration file only. It is not legal advice and it is
 not a substitute for an actual filing.
+
+## Report Downloads
+
+The UI now supports downloading the latest generated report as:
+
+- Markdown
+- PDF
+
+Use:
+
+- `create cyber analysis report for <target>`
+- `create batch cyber analysis report for 50 websites`
+
+Then click:
+
+- `Report MD`
+- `Report PDF`
 - `cyber analysis of amazon`
 - `cyber analysis of google.com`
 - `openvas scan https://example.com`

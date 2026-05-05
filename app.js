@@ -4,6 +4,8 @@ const promptEl = document.querySelector('#prompt');
 const clearButtonEl = document.querySelector('#clear-chat');
 const exportMarkdownEl = document.querySelector('#export-md');
 const exportJsonEl = document.querySelector('#export-json');
+const downloadReportMarkdownEl = document.querySelector('#download-report-md');
+const downloadReportPdfEl = document.querySelector('#download-report-pdf');
 const refreshStateEl = document.querySelector('#refresh-state');
 const statusEl = document.querySelector('#chat-status');
 const noteFormEl = document.querySelector('#note-form');
@@ -27,6 +29,7 @@ const starterMessages = [
 let conversationId = null;
 let messages = loadSession();
 let pending = false;
+let latestReportPath = null;
 
 function isGitHubPagesRuntime() {
   return window.location.hostname.endsWith('github.io');
@@ -281,6 +284,7 @@ function updateInsights(toolEvents) {
       renderThreatOverview(event.result);
     }
     if (event.tool_name === 'create_url_report_file' && event.result.graph) {
+      latestReportPath = event.result.report_path || latestReportPath;
       renderThreatOverview({
         ...event.result,
         final_url: event.result.url,
@@ -288,10 +292,19 @@ function updateInsights(toolEvents) {
       });
     }
     if (event.tool_name === 'create_openvas_report_file' && event.result.graph) {
+      latestReportPath = event.result.report_path || latestReportPath;
       renderThreatOverview({
         ...event.result,
         final_url: event.result.url,
       });
+    }
+    if (event.tool_name === 'create_batch_cyber_analysis_report') {
+      latestReportPath = event.result.markdown_path || latestReportPath;
+      addFeedItem(
+        classifierLogEl,
+        'Batch report',
+        `${event.result.targets_count} targets · PDF ready`,
+      );
     }
   });
 }
@@ -352,6 +365,16 @@ function downloadConversation(format) {
   const url = `/api/export?conversation_id=${encodeURIComponent(conversationId)}&format=${encodeURIComponent(
     format,
   )}`;
+  window.open(url, '_blank', 'noopener');
+}
+
+function downloadLatestReport(format) {
+  if (!latestReportPath) {
+    setStatus('No generated report available yet');
+    return;
+  }
+
+  const url = `/api/report-file?path=${encodeURIComponent(latestReportPath)}&format=${encodeURIComponent(format)}`;
   window.open(url, '_blank', 'noopener');
 }
 
@@ -452,6 +475,14 @@ exportMarkdownEl.addEventListener('click', () => {
 
 exportJsonEl.addEventListener('click', () => {
   downloadConversation('json');
+});
+
+downloadReportMarkdownEl.addEventListener('click', () => {
+  downloadLatestReport('markdown');
+});
+
+downloadReportPdfEl.addEventListener('click', () => {
+  downloadLatestReport('pdf');
 });
 
 renderMessages(messages);

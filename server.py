@@ -972,6 +972,24 @@ def search_company_directory(query, limit=5):
         connection.close()
 
 
+def list_company_directory(limit=50):
+    connection = db_connect()
+    try:
+        rows = connection.execute(
+            """
+            SELECT id, doc_key, title, category, source_url, content
+            FROM knowledge_docs
+            WHERE category = 'company-directory'
+            ORDER BY id ASC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+        return [dict(row) for row in rows]
+    finally:
+        connection.close()
+
+
 def search_company_threat_profiles(query, limit=3):
     term = (query or "").strip().lower()
     if not term:
@@ -1373,6 +1391,14 @@ def detect_url_report_request(text):
     return extract_target_url(text) is not None and "report" in candidate
 
 
+def detect_batch_report_request(text):
+    candidate = normalize_security_query(text)
+    return (
+        ("batch" in candidate or "50 website" in candidate or "50 websites" in candidate or "top 50" in candidate)
+        and ("report" in candidate or "analysis" in candidate)
+    )
+
+
 def detect_openvas_scan_request(text):
     candidate = normalize_security_query(text)
     if not has_target_reference(text):
@@ -1667,6 +1693,117 @@ def build_conversation_export(conversation_id, export_format="markdown"):
             lines.append("")
 
     return "\n".join(lines).strip() + "\n", "text/markdown; charset=utf-8", f"conversation-{conversation_id}.md"
+
+
+def escape_pdf_text(text):
+    return (
+        (text or "")
+        .replace("\\", "\\\\")
+        .replace("(", "\\(")
+        .replace(")", "\\)")
+    )
+
+
+def build_simple_pdf_bytes(title, body_text):
+    lines = [title, ""] + (body_text or "").splitlines()
+    pages = []
+    chunk_size = 42
+    for index in range(0, len(lines), chunk_size):
+        pages.append(lines[index : index + chunk_size] or [" "])
+
+    objects = []
+    page_object_numbers = []
+    content_object_numbers = []
+
+    object_number = 1
+    catalog_obj = object_number
+    object_number += 1
+    pages_obj = object_number
+    object_number += 1
+    font_obj = object_number
+    object_number += 1
+
+    for _ in pages:
+        page_object_numbers.append(object_number)
+        object_number += 1
+        content_object_numbers.append(object_number)
+        object_number += 1
+
+    def add_object(number, payload_bytes):
+        objects.append((number, payload_bytes))
+
+    add_object(catalog_obj, f"<< /Type /Catalog /Pages {pages_obj} 0 R >>".encode("utf-8"))
+    kids = " ".join(f"{number} 0 R" for number in page_object_numbers)
+    add_object(
+        pages_obj,
+        f"<< /Type /Pages /Kids [{kids}] /Count {len(page_object_numbers)} >>".encode("utf-8"),
+    )
+    add_object(font_obj, b"<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>")
+
+    for page_number, page_lines in enumerate(pages):
+        text_lines = ["BT", "/F1 10 Tf", "50 790 Td", "14 TL"]
+        for line in page_lines:
+            text_lines.append(f"({escape_pdf_text(line)}) Tj")
+            text_lines.append("T*")
+        text_lines.append("ET")
+        content_stream = "\n".join(text_lines).encode("utf-8")
+        content_obj = content_object_numbers[page_number]
+        page_obj = page_object_numbers[page_number]
+        add_object(
+            content_obj,
+            b"<< /Length "
+            + str(len(content_stream)).encode("ascii")
+            + b" >>\nstream\n"
+            + content_stream
+            + b"\nendstream",
+        )
+        add_object(
+            page_obj,
+            (
+                f"<< /Type /Page /Parent {pages_obj} 0 R /MediaBox [0 0 612 792] "
+                f"/Resources << /Font << /F1 {font_obj} 0 R >> >> "
+                f"/Contents {content_obj} 0 R >>"
+            ).encode("utf-8"),
+        )
+
+    objects.sort(key=lambda item: item[0])
+    output = bytearray(b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n")
+    offsets = [0]
+    for number, payload in objects:
+        offsets.append(len(output))
+        output.extend(f"{number} 0 obj\n".encode("utf-8"))
+        output.extend(payload)
+        output.extend(b"\nendobj\n")
+
+    xref_offset = len(output)
+    output.extend(f"xref\n0 {len(objects) + 1}\n".encode("utf-8"))
+    output.extend(b"0000000000 65535 f \n")
+    for offset in offsets[1:]:
+        output.extend(f"{offset:010d} 00000 n \n".encode("utf-8"))
+    output.extend(
+        (
+            f"trailer\n<< /Size {len(objects) + 1} /Root {catalog_obj} 0 R >>\n"
+            f"startxref\n{xref_offset}\n%%EOF"
+        ).encode("utf-8")
+    )
+    return bytes(output)
+
+
+def build_file_export(file_path, export_format):
+    path = Path(file_path).resolve()
+    if BASE_DIR not in path.parents and path != BASE_DIR:
+        raise RuntimeError("The requested file is outside the project directory.")
+    if not path.exists() or not path.is_file():
+        raise RuntimeError("The requested report file was not found.")
+
+    text = path.read_text(encoding="utf-8")
+    stem = path.stem
+    if export_format == "markdown":
+        return text, "text/markdown; charset=utf-8", path.name
+    if export_format == "pdf":
+        pdf_bytes = build_simple_pdf_bytes(stem, text)
+        return pdf_bytes, "application/pdf", f"{stem}.pdf"
+    raise RuntimeError("format must be markdown or pdf.")
 
 
 def classify_with_threshold(model_name, text):
@@ -2864,6 +3001,211 @@ def tool_create_openvas_report_file(arguments):
     }
 
 
+def resolve_batch_targets(raw_text=None, limit=50):
+    candidates = []
+    text = (raw_text or "").strip()
+
+    if text:
+        explicit_urls = re.findall(r"https?://[^\s,;]+", text)
+        for item in explicit_urls:
+            try:
+                candidates.append(normalize_target_url(item))
+            except RuntimeError:
+                continue
+
+        if not candidates:
+            segments = [
+                segment.strip()
+                for segment in re.split(r"[\n,;]+", text)
+                if segment.strip()
+            ]
+            for segment in segments:
+                if len(candidates) >= limit:
+                    break
+                target_url = extract_target_url(segment)
+                if target_url:
+                    candidates.append(target_url)
+
+    if not candidates:
+        directory_entries = list_company_directory(limit=limit)
+        for item in directory_entries:
+            source_url = item.get("source_url", "").strip()
+            if source_url:
+                candidates.append(source_url)
+
+    deduped = []
+    seen = set()
+    for item in candidates:
+        if item in seen:
+            continue
+        seen.add(item)
+        deduped.append(item)
+    return deduped[:limit]
+
+
+def create_company_profile_report_file(profile):
+    fields = extract_company_profile_fields(profile.get("content", ""))
+    company = fields.get("Company", profile.get("title", "Unknown company"))
+    domain = fields.get("Domain", profile.get("source_url", ""))
+    safe_name = re.sub(r"[^a-zA-Z0-9._-]+", "-", company.lower()).strip("-") or "company-profile"
+    report_path = REPORTS_DIR / f"{safe_name}-company-profile-report.md"
+    report_body = "\n".join(
+        [
+            "# Cyber Analysis Report",
+            "",
+            f"- URL: https://{domain}" if domain and "://" not in domain else f"- URL: {domain or company}",
+            "- Scan type: local-company-threat-profile",
+            "- Severity: Informational",
+            "- Threat score: 0/100",
+            "- Protection score: 0/100",
+            "- HTTP status: n/a",
+            "",
+            "## Executive Summary",
+            "",
+            f"Live website analysis was unavailable, so DarkTraceX returned the offline company threat profile for {company}.",
+            "",
+            "## Raw Summary",
+            "",
+            build_company_quick_response([profile]),
+            "",
+        ]
+    )
+    report_path.write_text(report_body, encoding="utf-8")
+    return str(report_path)
+
+
+def create_batch_cyber_analysis_report(raw_text=None, limit=50):
+    REPORTS_DIR.mkdir(exist_ok=True)
+    targets = resolve_batch_targets(raw_text, limit=limit)
+    if not targets:
+        raise RuntimeError("No valid targets were resolved for the batch report.")
+
+    rows = []
+    markdown_sections = [
+        "# Batch Cyber Analysis Report",
+        "",
+        f"Generated at: {utc_now()}",
+        f"Targets requested: {len(targets)}",
+        "",
+    ]
+
+    for target in targets:
+        entry = {
+            "target": target,
+            "final_url": target,
+            "status": "ok",
+            "severity": "",
+            "threat_score": "",
+            "protection_score": "",
+            "report_path": "",
+            "source_mode": "",
+            "note": "",
+        }
+        try:
+            result = tool_create_openvas_report_file({"url": target})
+            entry.update(
+                {
+                    "final_url": result["url"],
+                    "severity": result["severity"],
+                    "threat_score": result["threat_score"],
+                    "protection_score": result["protection_score"],
+                    "report_path": result["report_path"],
+                    "source_mode": result.get("scan_type", "cyber-analysis-report"),
+                    "note": "Passive website report created.",
+                }
+            )
+            markdown_sections.extend(
+                [
+                    f"## {result['url']}",
+                    "",
+                    f"- Severity: {result['severity']}",
+                    f"- Threat score: {result['threat_score']}/100",
+                    f"- Protection score: {result['protection_score']}/100",
+                    f"- Report path: {result['report_path']}",
+                    "",
+                ]
+            )
+        except Exception as exc:
+            profile = infer_company_profile_for_url(target)
+            if profile:
+                profile_path = create_company_profile_report_file(profile)
+                fields = extract_company_profile_fields(profile.get("content", ""))
+                entry.update(
+                    {
+                        "status": "fallback",
+                        "severity": "Informational",
+                        "report_path": profile_path,
+                        "source_mode": "company-profile",
+                        "note": f"Used offline company threat profile because live analysis failed: {exc}",
+                        "final_url": f"https://{fields.get('Domain', target)}" if fields.get("Domain") else target,
+                    }
+                )
+                markdown_sections.extend(
+                    [
+                        f"## {fields.get('Company', profile.get('title', target))}",
+                        "",
+                        "- Severity: Informational",
+                        f"- Report path: {profile_path}",
+                        f"- Note: {entry['note']}",
+                        "",
+                    ]
+                )
+            else:
+                entry.update(
+                    {
+                        "status": "unavailable",
+                        "severity": "Unavailable",
+                        "source_mode": "none",
+                        "note": str(exc),
+                    }
+                )
+                markdown_sections.extend(
+                    [
+                        f"## {target}",
+                        "",
+                        "- Severity: Unavailable",
+                        f"- Note: {exc}",
+                        "",
+                    ]
+                )
+        rows.append(entry)
+
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+    markdown_path = REPORTS_DIR / f"batch-cyber-analysis-{timestamp}.md"
+    csv_path = REPORTS_DIR / f"batch-cyber-analysis-{timestamp}.csv"
+    markdown_path.write_text("\n".join(markdown_sections), encoding="utf-8")
+
+    csv_lines = ["target,final_url,status,severity,threat_score,protection_score,source_mode,report_path,note"]
+    for row in rows:
+        csv_lines.append(
+            ",".join(
+                [
+                    json.dumps(str(row.get("target", ""))),
+                    json.dumps(str(row.get("final_url", ""))),
+                    json.dumps(str(row.get("status", ""))),
+                    json.dumps(str(row.get("severity", ""))),
+                    json.dumps(str(row.get("threat_score", ""))),
+                    json.dumps(str(row.get("protection_score", ""))),
+                    json.dumps(str(row.get("source_mode", ""))),
+                    json.dumps(str(row.get("report_path", ""))),
+                    json.dumps(str(row.get("note", ""))),
+                ]
+            )
+        )
+    csv_path.write_text("\n".join(csv_lines) + "\n", encoding="utf-8")
+
+    pdf_path = REPORTS_DIR / f"{markdown_path.stem}.pdf"
+    pdf_path.write_bytes(build_simple_pdf_bytes("Batch Cyber Analysis Report", markdown_path.read_text(encoding="utf-8")))
+
+    return {
+        "targets_count": len(rows),
+        "markdown_path": str(markdown_path),
+        "csv_path": str(csv_path),
+        "pdf_path": str(pdf_path),
+        "rows": rows,
+    }
+
+
 def tool_remember_note(arguments):
     return remember_note(arguments.get("content"), source="tool")
 
@@ -2947,6 +3289,13 @@ def tool_classify_defense_text(arguments):
     return classify_with_local_model(model_name, text)
 
 
+def tool_create_batch_cyber_analysis_report(arguments):
+    limit = int(arguments.get("limit", 50))
+    limit = max(1, min(limit, 50))
+    source_text = arguments.get("targets") or arguments.get("query") or ""
+    return create_batch_cyber_analysis_report(source_text, limit=limit)
+
+
 TOOLS = {
     "remember_note": tool_remember_note,
     "search_notes": tool_search_notes,
@@ -2967,6 +3316,7 @@ TOOLS = {
     "create_url_report_file": tool_create_url_report_file,
     "openvas_local_scan": tool_openvas_local_scan,
     "create_openvas_report_file": tool_create_openvas_report_file,
+    "create_batch_cyber_analysis_report": tool_create_batch_cyber_analysis_report,
 }
 
 
@@ -3332,6 +3682,31 @@ def handle_chat(messages):
             "memory_hits": [],
             "knowledge_hits": [],
             "model": "local-site-learning",
+        }
+
+    if detect_batch_report_request(last_user_text):
+        batch_result = tool_create_batch_cyber_analysis_report({"query": last_user_text, "limit": 50})
+        return {
+            "reply": "\n".join(
+                [
+                    f"Saved batch cyber analysis report for {batch_result['targets_count']} targets.",
+                    f"Markdown: {batch_result['markdown_path']}",
+                    f"CSV: {batch_result['csv_path']}",
+                    f"PDF: {batch_result['pdf_path']}",
+                    "",
+                    "Use the report download controls to fetch the latest report file.",
+                ]
+            ),
+            "tool_events": [
+                {
+                    "tool_name": "create_batch_cyber_analysis_report",
+                    "arguments": {"query": last_user_text, "limit": 50},
+                    "result": batch_result,
+                }
+            ],
+            "memory_hits": [],
+            "knowledge_hits": [],
+            "model": "rule-based-defense",
         }
 
     if detect_openvas_report_request(last_user_text):
@@ -3745,6 +4120,10 @@ class ChatHandler(SimpleHTTPRequestHandler):
             self.handle_export_get(parsed.query)
             return
 
+        if parsed.path == "/api/report-file":
+            self.handle_report_file_get(parsed.query)
+            return
+
         return super().do_GET()
 
     def do_POST(self):
@@ -3845,6 +4224,27 @@ class ChatHandler(SimpleHTTPRequestHandler):
 
             body_text, content_type, filename = build_conversation_export(conversation_id, export_format)
             self._send_bytes(200, body_text.encode("utf-8"), content_type, filename)
+        except RuntimeError as exc:
+            self._send_json(404, {"error": str(exc)})
+        except Exception:
+            self._send_json(500, {"error": "Unexpected server error."})
+
+    def handle_report_file_get(self, query_string):
+        try:
+            params = urllib.parse.parse_qs(query_string)
+            report_path = (params.get("path") or [""])[0]
+            export_format = (params.get("format") or ["markdown"])[0].lower()
+            if not report_path:
+                self._send_json(400, {"error": "A valid report path is required."})
+                return
+            if export_format not in {"markdown", "pdf"}:
+                self._send_json(400, {"error": "format must be markdown or pdf."})
+                return
+
+            body, content_type, filename = build_file_export(report_path, export_format)
+            if isinstance(body, str):
+                body = body.encode("utf-8")
+            self._send_bytes(200, body, content_type, filename)
         except RuntimeError as exc:
             self._send_json(404, {"error": str(exc)})
         except Exception:
